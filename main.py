@@ -1,21 +1,33 @@
 import extract_msg
 import sys
 import argparse
+import re
 
 
 sys.argv = ["test.py", "-i", "C:\\Users\\msoln\\OneDrive\\Documents\\test.msg", "-t", "msg"]
 
 
-def parse_outlook_email(email_file_path, email_file_type):
+def extract_urls(msg_body):
+    regex = r"https?://[^\s]+"
+    urls = re.findall(regex, msg_body)
+    return [url for url in urls]
+
+
+def extract_true_sender(msg_header):
+    return "\n".join(msg_header['Received'])
+
+
+def parse_outlook_email(email_file_path):
     email_file = email_file_path
     msg = extract_msg.Message(email_file)
     msg_sender = msg.sender
-    msg_message = msg.body
+    msg_body = msg.body
     msg_header = msg.headerDict
 
-    print('Header: {}'.format(msg_header))
-    print('Sender: {}'.format(msg_sender))
-    print('Body: {}'.format(msg_message))
+    true_sender = extract_true_sender(msg_header)
+    urls = "\n".join(extract_urls(msg_body))
+
+    return [true_sender, urls]
 
 
 def main():
@@ -29,8 +41,9 @@ def main():
     args = parser.parse_args()
 
     if args.email_file_type == "msg":
-        parse_outlook_email(args.email_file_path, args.email_file_type)
+        return parse_outlook_email(args.email_file_path)
 
 
 if __name__ == "__main__":
-    main()
+    for x in main():
+        print(x)
